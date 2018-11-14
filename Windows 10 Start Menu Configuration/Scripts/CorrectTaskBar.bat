@@ -1,1 +1,0 @@
-powershell.exe -executionpolicy bypass -file "C:\Windows\JRResources\CorrectTaskBar.ps1"
