@@ -1,7 +1,7 @@
 <StartMenuSettings>
 	<Companyname CompanyName="Contoso"/> <!-- Company Name used to generate folder under Windows directory -->
-	<CleanStartLayout CleanStartLayout = "0" /> <!--Set to 0 to create start menu groups based on Office Applications and Standard Company Apps; Set to 1 to create a clean start menu layout without any pinned items-->
-	<AppsToPin AppsToPin="'Excel,Onenote,PowerPoint,Word,Outlook,Skype For Business,OneDrive,Internet Explorer,Google Chrome,File Explorer'"/> <!--List of applications to pin to the taskbar. -->
+	<CleanStartLayout CleanStartLayout = "False" /> <!--Set to false to create start menu groups based on Office Applications and Standard Company Apps; Set to True to create a clean start menu layout without any pinned items-->
+	<AppsToPin AppsToPin="Excel,Onenote,PowerPoint,Word,Outlook,Skype For Business,OneDrive,Internet Explorer,Google Chrome,File Explorer, FireFox"/> <!--List of applications to pin to the taskbar. -->
 	<StartMenuGroups> <!-- Start section for start menu groups -->
 		<SMG Name='Standard Applications' Apps="Software Center,Google Chrome,Firefox,Internet Explorer,Adobe*Acrobat"/> <!-- Creates start menu group called "Standard Applications" -->
 		<SMG Name='Office Applications' Apps="Excel,Onenote,PowerPoint,Word,Outlook,Skype For Business,OneDrive"/>	<!-- Creates start menu group called "Office Applications" -->

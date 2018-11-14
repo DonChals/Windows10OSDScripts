@@ -1,5 +1,5 @@
 ﻿Param(
-    [String]$XMLFileToParse
+    [String]$XMLFileToParse = "$PSScriptRoot\StartMenuSettings.xml"
 )
 
 ##### Variables #####
@@ -225,8 +225,7 @@ Class Settings
     [boolean]$ShowHiddenFiles
     [boolean]$ShowFileExt
     [System.Xml.XmlElement]$StartMenuGroups
-    [Boolean]$DisableEdgeShortcut
-
+    
     New([String]$XMLFile)
     {
         [xml]$XmlReader = Get-Content -Path $XMLFile
@@ -255,6 +254,16 @@ Function Get-TaskBarItems($AppNames)
         {
             $LNKPath = New-Object psobject
             $LNKPath | Add-Member -MemberType NoteProperty -Name "FullName" -Value '%APPDATA%\Microsoft\Windows\Start Menu\Programs\System Tools\File Explorer.lnk'
+        }
+        elseif($App -eq "Internet Explorer")
+        {
+            $LNKPath = New-Object PSObject
+            $LNKPath | Add-Member -MemberType NoteProperty -Name "FullName" -Value '%APPDATA%\Microsoft\Windows\Start Menu\Programs\Accessories\Internet Explorer.lnk'
+        }
+        elseif($App -eq "Onedrive")
+        {
+            $LNKPath = New-Object PSObject
+            $LNKPath | Add-Member -MemberType NoteProperty -Name "FullName" -Value '%APPDATA%\Microsoft\Windows\Start Menu\Programs\Onedrive.lnk'
         }
         else
         {
@@ -359,6 +368,10 @@ if(!(Test-Path $OutputLocation))
     New-Item -Path "$env:SystemDrive\Windows" -Name $Script:Settings.CompanyName -ItemType Directory
 }
 
+#region Setup our scripts folder under our company folder
+    Copy-item $script:ScriptsFolderPath -Destination $OutputLocation -Recurse
+#endregion
+
 $OutputLocation = $OutputLocation + "\LayoutModification.xml"
 
 if($Script:Settings.CleanStartLayout -eq $False){
@@ -399,13 +412,19 @@ if($Script:Settings.AppsToPin)
 
     Import-StartLayout -LayoutPath $($OutputLocation.Replace(".xml", "_TaskBar.xml")) -MountPath $($env:SystemDrive + "\")
 
-
+    
     #region Create Logon Script to disable locked down taskbar
     ##### Check to see if runonce key exists #####
-    $CreateRegKey = 0
-    $CorrectTaskBarCommand = "Powershell.exe -executionpolicy bypass -file C:\Windows\$CompanyName\Scripts\CorrectTaskBar.ps1 -companyname $CompanyName"
-    $DefaultRunOncePath = "Registry::HKEY_Local_Machine\Test\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    
     reg load hklm\test C:\users\default\NTUSER.DAT
+
+    $ScriptBlock = {
+    param(
+        $Script:CompanyName
+        )
+    $CreateRegKey = 0
+    $CorrectTaskBarCommand = "Powershell.exe -executionpolicy bypass -file C:\Windows\$Script:CompanyName\Scripts\CorrectTaskBar.ps1 -companyname $CompanyName"
+    $DefaultRunOncePath = "Registry::HKEY_Local_Machine\Test\Software\Microsoft\Windows\CurrentVersion\RunOnce"
     $DefaultRunOnceKey = Get-Item -LiteralPath $DefaultRunOncePath -ErrorAction SilentlyContinue
     if(!$DefaultRunOnceKey)
     {
@@ -432,12 +451,18 @@ if($Script:Settings.AppsToPin)
     {
         New-ItemProperty -Path $DefaultRunOncePath -Name "CorrectTaskbar" -PropertyType String -Value $CorrectTaskBarCommand
     }
+    }
+    
+    #Using start job here with the script block to stop the registry for not being able to unload hklm\test
+
+    Start-Job -ScriptBlock $ScriptBlock -Name "Update Registry" -ArgumentList $script:Settings.CompanyName | Wait-Job
 
     Sleep -Seconds 5
 
     [gc]::Collect()
 
     reg unload hklm\test
+    
     #endregion
 }
 else
